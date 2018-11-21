@@ -141,6 +141,10 @@ DeepSpeech, the client will print an error and then exit.
 
 ## Caveats, Requirements, and Notes
 
+We have found that installing deepspeech-gpu may not work if you are
+running an old version of cuda. The best way to avoid this is to run
+on a system using cuda 10.
+
 The Mozilla DeepSpeech model requires single-channel audio and a 16
 kHz sample rate. The client program gives an example of how to convert
 audio into this format using Python. If you generate your own audio
