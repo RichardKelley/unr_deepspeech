@@ -10,14 +10,14 @@ class DeepspeechNode:
     #
     # dictionary: output from deepspeech is corrected to the closest word
     #             in the given dictionary on a word-by-word basis
-    # possibilities: complete output from deepspeech is corrected to the
-    #                closest phrase in the given possibilities
+    # commands: complete output from deepspeech is corrected to the
+    #           closest phrase in the given commands
     def __init__(self, model=None, model_path=None,
-                 possibilities=None, dictionary=None):
+                 commands=None, dictionary=None):
         self.model = model
         if model_path != None:
             self.load_model(model_path)
-        self.possibilities = possibilities
+        self.commands = commands
         self.dictionary = dictionary
 
     # Default values for n_feaures, n_context, beam_width are from
@@ -69,12 +69,12 @@ class DeepspeechNode:
 
             transcription = new_transcription
 
-        if self.possibilities != None:
+        if self.commands != None:
             distances = [self.levenshtein_distance(transcription, possibility)
-                         for possibility in self.possibilities]
+                         for possibility in self.commands]
             min_dist_index = min(xrange(len(distances)),
                                  key=lambda x: distances[x])
-            transcription_guess = self.possibilities[min_dist_index]
+            transcription_guess = self.commands[min_dist_index]
             transcription = transcription_guess
 
         return transcription

@@ -16,31 +16,31 @@ import os
 def handle_listener(req):
 
     global listener
-    
+
     audio_path = req.filename
     audio_file = wave.open(audio_path)
     fs = audio_file.getframerate()
     audio_string = audio_file.readframes(-1)
     audio = [struct.unpack("<h", audio_string[i:i+2])[0]
-             for i in xrange(0, len(audio_string), 2)]    
+             for i in xrange(0, len(audio_string), 2)]
 
     text = listener.stt(fs, audio)
     print(text)
-    
+
     return text
 
 def listener_server():
     global listener
 
     rp = RosPack()
-    package_path = rp.get_path("unr_deepspeech") 
+    package_path = rp.get_path("unr_deepspeech")
     model_path = "{}/model".format(package_path)
     if rospy.has_param("/unr_deepspeech/model"):
         model_path = rospy.get_param("/unr_deepspeech/model")
     print "Loading model from" + model_path
-    
+
     listener = DeepspeechNode(model_path=model_path)
-    
+
     if rospy.has_param("/unr_deepspeech/dictionary"):
         dict_filename = rospy.get_param("unr_deepspeech/dictionary")
         dict_path = package_path + "/" + dict_filename
@@ -48,11 +48,11 @@ def listener_server():
         with open(dict_path) as dict_file:
             listener.dictionary = dict_file.read().split("\n")
 
-    if rospy.has_param("/unr_deepspeech/possibilities"):
-        possibilities_path = rospy.get_param("unr_deepspeech/possibilities")
-        print "Loading possible transcripts from " + possibilities_path
-        with open(possibilities_path) as possibilities_file:
-            listener.possibilities = possibilities_file.read().split("\n")
+    if rospy.has_param("/unr_deepspeech/commands"):
+        commands_path = rospy.get_param("unr_deepspeech/commands")
+        print "Loading possible transcripts from " + commands_path
+        with open(commands_path) as commands_file:
+            listener.commands = commands_file.read().split("\n")
 
     rospy.init_node('listener_server')
 

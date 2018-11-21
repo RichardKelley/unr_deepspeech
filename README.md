@@ -103,6 +103,14 @@ this command:
 rosparam set /unr_deepspeech/dictionary dictionary.txt
 ```
 
+If line-by-line comparison is preferred to word-by-word comparison,
+there is also a commands parameter which will translate each line
+output from DeeepSpeech into the most similar command.
+
+```
+rosparam set /unr_deepspeech/commands command-dictionary.txt
+```
+
 Now start the server. The server will list the full path of the file,
 or produce an error if it can't find the file.
 
