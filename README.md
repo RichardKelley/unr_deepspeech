@@ -39,19 +39,22 @@ the package to a ROS workspace, download a pretrained model into the
 
 To get started you will probably want to use a pretrained
 model. Mozilla provides a model that achieves excellent performance on
-spoken English. To download that model, change into the `model/`
-directory and run the following command:
+spoken English. To download that model, run the following command from
+anywhere in your filesystem:
 
 ```
 wget -O - https://github.com/mozilla/DeepSpeech/releases/download/v0.3.0/deepspeech-0.3.0-models.tar.gz | tar xvfz -
 ```
 
-After this command runs, your directory tree should look like this:
+After this command runs, copy the contents of the resulting `models`
+folder into the empty `model` folder in the package. Your directory
+tree should then look like this:
 
 ```
 .
 ├── CMakeLists.txt
 ├── data
+├── LICENSE
 ├── model
 │   ├── alphabet.txt
 │   ├── lm.binary
@@ -71,7 +74,7 @@ After this command runs, your directory tree should look like this:
 └── srv
     └── Listen.srv
 
-4 directories, 16 files
+4 directories, 17 files
 ```
 
 Once the model is downloaded, you should be ready to use the system.
