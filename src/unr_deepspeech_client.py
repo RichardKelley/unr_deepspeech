@@ -10,12 +10,12 @@ import wave
 
 import rospy
 from unr_deepspeech.srv import *
+import webrtcvad
 
 from rospkg import RosPack
 import audioop
 
 THRESHOLD = 500
-CHUNK_SIZE = 1024
 FORMAT = pyaudio.paInt16
 
 def unr_deepspeech_client(filename):
@@ -26,10 +26,6 @@ def unr_deepspeech_client(filename):
         return resp1.prediction
     except rospy.ServiceException, e:
         print "Service call failed: %s"%e
-
-def is_silent(snd_data):
-    "Returns 'True' if below the 'silent' threshold"
-    return max(snd_data) < THRESHOLD
 
 def normalize(snd_data):
     "Average the volume out"
@@ -83,30 +79,38 @@ def record(rate, device):
     it without getting chopped off.
     """
     p = pyaudio.PyAudio()
+    buffer_size = int(rate * .02)
     stream = p.open(format=FORMAT, channels=1, rate=rate,
-        input=True, output=True, frames_per_buffer=CHUNK_SIZE,
+        input=True, output=True, frames_per_buffer=buffer_size,
         input_device_index=device)
 
     num_silent = 0
+    num_speech = 0
     snd_started = False
 
     r = array('h')
 
+    vad = webrtcvad.Vad()
+    vad.set_mode(3)
+
     while 1:
         # little endian, signed short
-        snd_data = array('h', stream.read(CHUNK_SIZE, exception_on_overflow=False))
+        snd_data = array('h', stream.read(buffer_size, exception_on_overflow=False))
         if byteorder == 'big':
             snd_data.byteswap()
         r.extend(snd_data)
 
-        silent = is_silent(snd_data)
+        speech = vad.is_speech(snd_data, rate)
 
-        if silent and snd_started:
+        if not speech and snd_started:
             num_silent += 1
-        elif not silent and not snd_started:
-            snd_started = True
+        elif speech:
+            num_silent = 0
+            num_speech += 1
+            if not snd_started:
+                snd_started = True
 
-        if snd_started and num_silent > 30:
+        if snd_started and num_silent > 30 and num_speech > 10:
             break
 
     sample_width = p.get_sample_size(FORMAT)
@@ -127,7 +131,7 @@ def record_to_file(path, rate, device):
         data_16GHz = audioop.ratecv(data, sample_width, 1, rate, 16000, None)[0]
     else:
         data_16GHz = pack('<' + ('h'*len(data)), *data)
-        
+
     wf = wave.open(path, 'wb')
     wf.setnchannels(1)
     wf.setsampwidth(sample_width)
@@ -141,10 +145,10 @@ if __name__ == "__main__":
     print("")
     info = p.get_host_api_info_by_index(0)
     numdevices = info.get('deviceCount')
-    
+
     device = -1
     rate = 48000
-    
+
     if len(sys.argv) > 1:
         if sys.argv[1] == "-1":
             print("\nListing audio devices and exiting: ")
@@ -161,7 +165,7 @@ if __name__ == "__main__":
                 print("Invalid audio device id.")
                 print("usage: rosrun unr_deepspeech unr_deepspeech_client.py [audio_device_index]")
                 sys.exit(1)
-    elif len(sys.argv) == 1: # search for default device        
+    elif len(sys.argv) == 1: # search for default device
         for i in range(0, numdevices):
              if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
                  if p.get_device_info_by_host_api_device_index(0, i).get('name') == 'default':
@@ -177,19 +181,19 @@ if __name__ == "__main__":
     else:
         print("usage: rosrun unr_deepspeech unr_deepspeech_client.py [audio_device_index]")
         sys.exit(1)
-        
+
     rospy.init_node("unr_deepspeech_client")
     current_time = int(rospy.get_time())
     rp = RosPack()
     audio_path = rp.get_path("unr_deepspeech") + "/data"
 
     print("Ready to record")
-    try:
-        record_to_file("{}/{}.wav".format(audio_path, current_time), rate=rate, device=device)
-    except:
-        print("Error transcribing audio. Check your audio device index.")
-        sys.exit(1)
-        
+    #try:
+    record_to_file("{}/{}.wav".format(audio_path, current_time), rate=rate, device=device)
+    #except:
+    #    print("Error transcribing audio. Check your audio device index.")
+    #    sys.exit(1)
+
     print("Transcribing speech...")
     print("Text: {}".format(unr_deepspeech_client("{}/{}.wav".format(audio_path, current_time))))
 
