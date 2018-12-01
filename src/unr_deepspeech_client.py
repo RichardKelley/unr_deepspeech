@@ -188,11 +188,11 @@ if __name__ == "__main__":
     audio_path = rp.get_path("unr_deepspeech") + "/data"
 
     print("Ready to record")
-    #try:
-    record_to_file("{}/{}.wav".format(audio_path, current_time), rate=rate, device=device)
-    #except:
-    #    print("Error transcribing audio. Check your audio device index.")
-    #    sys.exit(1)
+    try:
+        record_to_file("{}/{}.wav".format(audio_path, current_time), rate=rate, device=device)
+    except:
+        print("Error transcribing audio. Check your audio device index.")
+        sys.exit(1)
 
     print("Transcribing speech...")
     print("Text: {}".format(unr_deepspeech_client("{}/{}.wav".format(audio_path, current_time))))
